@@ -3,6 +3,5 @@ project(Frustum_Culling)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(Frustum_Culling Vector.h
-        cmake-build-debug/Box.h
+add_executable(Frustum_Culling
         main.cpp)
