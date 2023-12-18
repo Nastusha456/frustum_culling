@@ -123,9 +123,9 @@ public:
         }
     }
 
-    std::vector<Vector2> search(float x, float y, float width, float height, const Trapezoid& trapezoid) {
+    std::vector<Vector2> search( const Trapezoid& trapezoid) {
         std::vector<Vector2> result;
-        search(root, x, y, width, height, result, trapezoid);
+        search(root, result, trapezoid);
         return result;
     }
 
@@ -175,19 +175,19 @@ public:
         node->vectors.clear();
     }
 
-    bool isOutsideOrInsideTrapezoidNode(const QuadTreeNode* node, float width, float height, const Trapezoid& trapezoid) {
+    bool isOutsideOrInsideTrapezoidNode(const QuadTreeNode* node, const Trapezoid& trapezoid) {
         bool insideTrap =
             trapezoid.isInsideTrapezoid(Vector2(node->x, node->y)) &&
-            trapezoid.isInsideTrapezoid(Vector2(node->x + width, node->y)) &&
-            trapezoid.isInsideTrapezoid(Vector2(node->x, node->y + height)) &&
-            trapezoid.isInsideTrapezoid(Vector2(node->x + width, node->y + height));
+            trapezoid.isInsideTrapezoid(Vector2(node->x + node->width, node->y)) &&
+            trapezoid.isInsideTrapezoid(Vector2(node->x, node->y + node->height)) &&
+            trapezoid.isInsideTrapezoid(Vector2(node->x + node->width, node->y + node->height));
 
         bool outsideTrap = false;
         const Line sides[] = {trapezoid.right, trapezoid.back, trapezoid.left, trapezoid.front};
 
         for (const auto& line : sides) {
-            if ((node->x <= line.start.x && line.start.x <= node->x + width && node->y <= line.start.y && line.start.y <= node->y + height) ||
-                (node->x <= line.end.x && line.end.x <= node->x + width && node->y <= line.end.y && line.end.y <= node->y + height)) {
+            if ((node->x <= line.start.x && line.start.x <= node->x + node->width && node->y <= line.start.y && line.start.y <= node->y + node->height) ||
+                (node->x <= line.end.x && line.end.x <= node->x + node->width && node->y <= line.end.y && line.end.y <= node->y + node->height)) {
                 outsideTrap = true;
             }
         }
@@ -195,23 +195,20 @@ public:
         return insideTrap || outsideTrap;
     }
 
-    void search(QuadTreeNode* node, float x, float y, float width, float height, std::vector<Vector2>& result, const Trapezoid& trapezoid) {
+    void search(QuadTreeNode* node, std::vector<Vector2>& result, const Trapezoid& trapezoid) {
         if (node->isLeaf()) {
             for (const auto& vector : node->vectors) {
-                if (x <= vector.x && vector.x <= x + width && y <= vector.y && vector.y <= y + height) {
-                    if (trapezoid.isInsideTrapezoid(vector)) {
-                        result.push_back(vector);
-                    }
+                if (trapezoid.isInsideTrapezoid(vector)) {
+                    result.push_back(vector);
                 }
+
             }
         } else {
-            if (x <= node->x + node->width && x + width >= node->x &&
-                y <= node->y + node->height && y + height >= node->y &&
-                isOutsideOrInsideTrapezoidNode(node, width, height, trapezoid)) {
-                search(node->top_left, x, y, width, height, result, trapezoid);
-                search(node->top_right, x, y, width, height, result, trapezoid);
-                search(node->bottom_left, x, y, width, height, result, trapezoid);
-                search(node->bottom_right, x, y, width, height, result, trapezoid);
+            if  (isOutsideOrInsideTrapezoidNode(node, trapezoid)) {
+                search(node->top_left, result, trapezoid);
+                search(node->top_right, result, trapezoid);
+                search(node->bottom_left, result, trapezoid);
+                search(node->bottom_right, result, trapezoid);
             }
         }
     }
@@ -235,7 +232,7 @@ public:
         quadTree->insert(obj2);
         quadTree->insert(obj3);
         quadTree->insert(obj4);
-        result = quadTree->search(0, 0, width, height, trapezoid);
+        result = quadTree->search(trapezoid);
         for (const auto& vec : result) {
             std::cout << vec.x << " " << vec.y << std::endl;
         }
